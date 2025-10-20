@@ -20,8 +20,8 @@ K = 100; S = 100; T = 0.25; cp = '';
 N = 50;
 tt = linspace(0,T, N);
 
-useDiscretePropDiv = true;
-useDiscriteCashDiv = false;
+useDiscretePropDiv = false;
+useDiscriteCashDiv = true;
 
 %% Initial values of time-dependent parameters 
 Ar = 0.01; Br = 1.; Cr = 0.01;
@@ -32,18 +32,24 @@ Aq = 0.02; Bq = 0.5; Cq = -0.01;
 rq = @(t) Aq*exp(-Bq*t) + Cq;  
 
 [exDiscrPropDates, propAmouns, exDiscrCashDates, cashAmouns] = deal([]);
+r = flip(rr(tt)); 
+sig = flip(ssig(tt));
 if useDiscretePropDiv
     exDiscrPropDates = [0.07, 0.12, 0.17, 0.22];
     propAmouns = [0.05,0.04,0.03, 0.02];
 end
+q = flip(dividends(tt,rq, exDiscrPropDates,propAmouns, exDiscrCashDates,cashAmouns)); 
+
 if useDiscriteCashDiv
     exDiscrCashDates = [0.07, 0.12, 0.17, 0.22];
-    cashAmouns = [0.05,0.04,0.03, 0.02]./K;
+    cashAmouns = [0.05,0.04,0.03, 0.02].*K;
+    for i = 1:length(exDiscrCashDates)
+        exDiscrCashDates(i) = 0.5.*integral(@(s) ssig(s).^2, exDiscrCashDates(i), T);
+    end
+    exDiscrCashDates = flip(exDiscrCashDates);    
+    cashAmouns = flip(cashAmouns);
 end   
 
-r = flip(rr(tt)); 
-q = flip(dividends(tt,rq, exDiscrPropDates,propAmouns, exDiscrCashDates,cashAmouns)); 
-sig = flip(ssig(tt));
 if plotInitData
     plotData(tt,r,q,sig);
 end
@@ -55,6 +61,10 @@ for i=1:N
     br(i) = integral(@(s) rr(s), tt(i), T);
 end    
 tau = flip(tau); tau(1) = 0;
+for i=1:length(exDiscrCashDates)
+    [c,index] = min(abs(tau-exDiscrCashDates(i)));
+    exDiscrCashDates(i) = index;
+end
 alpha = exp(-tau + flip(bRho));
 brr = exp(flip(br));
 rhoP1 = r(1)-q(1);

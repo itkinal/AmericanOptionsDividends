@@ -1,4 +1,4 @@
-function f = funEB(x,k,b1,tt, params, useDiscretePropDiv,useDiscriteCashDiv)
+function f = funEB(x,k,b1,tt, params, useDiscretePropDiv, useDiscriteCashDiv)
 
 persistent den eb1 yp psi sqtau sqpi z eta brP et sqt ss ...
     T K cp r q sig beta alpha rhoP1 rP1 exDiscrCashDates cashAmouns 
@@ -69,7 +69,7 @@ if useDiscretePropDiv
     A  = 1;
     k1 = A + dx./(2.*dd); k12 = k1.*k1;
     prod = (1 + erf(k1./(2.*sqk2))).*exp(k12./(4.*k2));
-    prod(find(isnan(prod))) = 0;
+    prod(isnan(prod)) = 0;
     J2 = sqpi.*prod./(2.*sqk2);
     J2_1 = 1./(2.*k2) + J2.*k1./(2.*k2);
     J2_2 = k1./(4.*k22) + J2.*(2.*k2 + k12)./(4.*k22);
@@ -79,7 +79,7 @@ if useDiscretePropDiv
     A  = 0;
     k1 = A + dx./(2.*dd); k12 = k1.*k1;
     prod = exp(k12./(4.*k2)).*(1 + erf(k1./(2.*sqk2)));
-    prod(find(isnan(prod))) = 0;
+    prod(isnan(prod)) = 0;
     J2 = sqpi.*prod./(2.*sqk2);
     J2_1 = 1./(2.*k2) + J2.*k1./(2.*k2);
     J2_2 = k1./(4.*k22) + J2.*(2.*k2 + k12)./(4.*k22);
@@ -89,12 +89,53 @@ if useDiscretePropDiv
     J10 = beta(1:s).*(J_10_0 + J_10_1);  
 end
 
+divSum = 0;
+if useDiscriteCashDiv
+    jm = find(exDiscrCashDates < k);
+    if ~isempty(jm)        
+        for j = jm
+            jj = exDiscrCashDates(j);
+            gaussD = gauss(jj)./den(jj);
+            k2 = tt(jj) + 1./(4.*dd(jj)); sqk2 = sqrt(k2);
+            k22 = k2.*k2;
+
+            a0 = 2*tt(jj)*alpha(jj);
+            a1 = a0*(1 - 2*tt(jj)*eb1(jj));
+            a2 = -4*a0*tt(jj);
+            b0 = 2. - 2*tt(jj)*(1 + eb1(jj));
+            b1 = -2*tt(jj)*(3 - 2 *tt(jj)*eb1(jj));
+            b2 = 4*a0*tt(jj);
+            
+            A  = 1;
+            k1 = -A + dx(jj)./(2.*dd(jj)); k12 = k1.*k1;
+            prod = (1 + erf(k1./(2.*sqk2))).*exp(k12./(4.*k2));
+            prod(isnan(prod)) = 0;
+            J2 = sqpi.*prod./(2.*sqk2);
+            J2_1 = 1./(2.*k2) + J2.*k1./(2.*k2);
+            J2_2 = k1./(4.*k22) + J2.*(2.*k2 + k12)./(4.*k22);
+            J_10_1 = (a0.*J2 - a1.*J2_1 + a2.*J2_2)/eb1(jj);
+
+            A  = 0;
+            k1 = -A + dx(jj)./(2.*dd(jj)); k12 = k1.*k1;
+            prod = (1 + erf(k1./(2.*sqk2))).*exp(k12./(4.*k2));
+            prod(isnan(prod)) = 0;
+            J2 = sqpi.*prod./(2.*sqk2);
+            J2_1 = 1./(2.*k2) + J2.*k1./(2.*k2);
+            J2_2 = k1./(4.*k22) + J2.*(2.*k2 + k12)./(4.*k22);
+            J_10_0 = b0.*J2 + b1.*J2_1 + b2.*J2_2;
+    
+            Lambda = beta(k).*gaussD.*(J_10_0 + J_10_1);
+            divSum = divSum + 2.*alpha(jj)./sig(jj).^2.*cashAmouns(j).*Lambda;
+        end    
+    end
+end
+
 ig1 = [ ( (eta(1:s) + J10).*gauss - eta(k))./den, 0];
 add1 = sqtau(k)*2*eta(k)/sqpi;
 
 % integ = trapz(tt(1:k), ig1);
 integ = 0.5.*sum((ig1(1:s-1) + ig1(2:s)).*(tt(2:s) - tt(1:s-1)));
-f = psi(k) - (integ + add1);
+f = psi(k) - (integ + add1 + divSum);
 
 if isnan(f)
     ME = MException('function value is NaN');
