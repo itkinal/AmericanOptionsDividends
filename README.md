@@ -10,14 +10,14 @@ and the GIT method" published in SSRN and ArXiv, 2025.
 
 If you use this code in your research, please cite our paper:
 
-@article{itkin2025semi,
-  title       = {Semi-analytical pricing of American options with hybrid dividends via integral equations and the {GIT} method},
-  author      = {Itkin, Andrey}, 
-  journal     = {SSRN},
-  year        = {2025},
-  month       = {oct},
-  url         = {https://ssrn.com/abstract=5632290},
-  note        = {Available at SSRN: \url{https://ssrn.com/abstract=5632290}},
-  abstract_id = {5632290},
-  institution = {New York University (NYU) - NYU Tandon School of Engineering}
+@article{itkin2025semi,<br />
+  title       = {Semi-analytical pricing of American options with hybrid dividends via integral equations and the {GIT} method},<br />
+  author      = {Itkin, Andrey},<br /> 
+  journal     = {SSRN},<br />
+  year        = {2025},<br />
+  month       = {oct},<br />
+  url         = {https://ssrn.com/abstract=5632290},<br />
+  note        = {Available at SSRN: \url{https://ssrn.com/abstract=5632290}},<br />
+  abstract_id = {5632290},<br />
+  institution = {New York University (NYU) - NYU Tandon School of Engineering}<br />
 }
